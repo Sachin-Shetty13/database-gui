@@ -64,3 +64,26 @@ body {
   color: rgb(231, 140, 140);
   font-size: 0.8rem;
 }
+
+.main-container p {
+  font-size: 0.8rem;
+}
+
+.toggle-form {
+  border: none;
+  border-radius: 5px;
+  border: 2px solid rgb(138, 138, 138);
+  background-color: rgb(46, 46, 46);
+  color: rgb(206, 206, 206);
+  padding: 0.5rem;
+  width: 20rem;
+  font-weight: 600;
+
+  transition: all 0.2s ease-in-out;
+}
+
+.toggle-form:hover {
+  cursor: pointer;
+  border: 2px solid rgb(167, 167, 167);
+  background-color: rgb(38, 38, 38);
+}

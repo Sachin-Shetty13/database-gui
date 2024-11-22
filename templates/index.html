@@ -32,6 +32,34 @@
         />
         <button type="submit">Connect</button>
       </form>
+
+      <p>or</p>
+
+      <button class="toggle-form" data-form-state="connect">
+        Create a database
+      </button>
+      <script>
+        const toggleFormButton = document.querySelector(".toggle-form");
+        const inputFields = document.querySelectorAll("input");
+        const formPrompt = document.querySelector("h1");
+        const form = document.querySelector("form");
+        const submitButton = document.querySelector("button[type='submit']");
+        toggleFormButton.addEventListener("click", () => {
+          if (toggleFormButton.dataset.formState === "connect") {
+            toggleFormButton.textContent = "Connect to a database";
+            formPrompt.textContent = "Create a database";
+            submitButton.textContent = "Create";
+            form.action = "/create";
+            toggleFormButton.dataset.formState = "create";
+          } else {
+            toggleFormButton.textContent = "Create a database";
+            formPrompt.textContent = "Connect to a database";
+            submitButton.textContent = "Connect";
+            form.action = "/connect";
+            toggleFormButton.dataset.formState = "connect";
+          }
+        });
+      </script>
     </main>
   </body>
 </html>
