@@ -1,0 +1,37 @@
+<html>
+  <head>
+    <title>Databases</title>
+    <link rel="stylesheet" href="static/index.css" />
+  </head>
+  <body>
+    <main class="main-container">
+      <h1>Connect to a database</h1>
+
+      {% if request.args.get('error') %}
+      <div class="error">{{ request.args.get('error') }}</div>
+      {% endif %}
+
+      <form action="/connect" method="POST">
+        <input
+          type="text"
+          id="connection_string"
+          name="connection_string"
+          placeholder="Database name"
+        />
+        <input
+          type="username"
+          id="username"
+          name="username"
+          placeholder="Username"
+        />
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Password "
+        />
+        <button type="submit">Connect</button>
+      </form>
+    </main>
+  </body>
+</html>
