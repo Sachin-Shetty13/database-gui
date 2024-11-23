@@ -39,8 +39,6 @@ def databaseFunc():
     if not database_name or not username or not password:
         return redirect('/?error=Please connect to a database first')
     
-    database_name = "medicause"
-    
     try:
         database.setConfig(database_name, username, password, 'localhost', 5432)
         database.connect()
@@ -59,6 +57,12 @@ def databaseFunc():
     cursor.close()
     
     return render_template('database.html', database_name=database_name, tables=tables)
+
+@app.route('/disconnect', methods=['GET'])
+def disconnect():
+    session.clear()
+    return redirect('/')
+
 
 @app.route('/getTableData', methods=['GET'])
 def getTableData():
