@@ -76,7 +76,90 @@ def getTableData():
     resultRows = cursor.fetchall()
     
     cursor.close()
-    return jsonify(rows=resultRows, columns=[column[0] for column in resultColumns])
+    return jsonify(rows=resultRows, columns=[column[0] for column in resultColumns], columnTypes=[column[1] for column in resultColumns])
+
+@app.route('/addItem', methods=['POST'])
+def addItem():
+    table = request.args.get('table')
+    data = request.json
+    
+    cursor = database.getCursor()
+    cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
+    resultColumns = cursor.fetchall()
+    
+    columns = [column[0] for column in resultColumns]
+    
+    cursor = database.getCursor()
+    
+    try:
+        cursor.execute(f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(['%s' for _ in data])})", data)
+        database.postgres.commit()
+    except Exception as e:
+        database.postgres.rollback()
+        cursor.close()
+        return jsonify(error=': '.join(str(e).replace('\n', ' ').split(':')))
+    
+    cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
+    resultColumns = cursor.fetchall()
+    
+    cursor.execute(f"SELECT * FROM {table}")
+    resultRows = cursor.fetchall()
+    
+    cursor.close()
+    return jsonify(rows=resultRows, columns=[column[0] for column in resultColumns], columnTypes=[column[1] for column in resultColumns])
+
+@app.route('/updateItem', methods=['POST'])
+def updateItem():
+    table = request.args.get('table')
+    data = request.json
+    
+    print(data, table)
+    
+    cursor = database.getCursor()
+    cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
+    resultColumns = cursor.fetchall()
+    
+    columns = [column[0] for column in resultColumns]
+    
+    try:
+        cursor.execute(f"UPDATE {table} SET {', '.join([f'{column} = %s' for column in columns])} WHERE id = %s", (*data['values'], data['id']))
+        database.postgres.commit()
+    except Exception as e:
+        database.postgres.rollback()
+        cursor.close()
+        return jsonify(error=': '.join(str(e).replace('\n', ' ').split(':')))
+    
+    cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
+    resultColumns = cursor.fetchall()
+    
+    cursor.execute(f"SELECT * FROM {table}")
+    resultRows = cursor.fetchall()
+    
+    cursor.close()
+    return jsonify(rows=resultRows, columns=[column[0] for column in resultColumns], columnTypes=[column[1] for column in resultColumns])
+
+@app.route('/deleteItem', methods=['POST'])
+def deleteItem():
+    table = request.args.get('table')
+    data = request.json
+    
+    cursor = database.getCursor()
+    try:
+        cursor.execute(f"DELETE FROM {table} WHERE id = %s", (data['id'],))
+        database.postgres.commit()
+    except Exception as e:
+        database.postgres.rollback()
+        cursor.close()
+        return jsonify(error=': '.join(str(e).replace('\n', ' ').split(':')))
+    
+    cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
+    resultColumns = cursor.fetchall()
+    
+    cursor.execute(f"SELECT * FROM {table}")
+    resultRows = cursor.fetchall()
+    
+    cursor.close()
+    return jsonify(rows=resultRows, columns=[column[0] for column in resultColumns], columnTypes=[column[1] for column in resultColumns])
 
 if __name__ == '__main__':
     app.secret_key = 'super secret key'

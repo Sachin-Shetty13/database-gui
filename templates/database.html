@@ -31,18 +31,11 @@
     </main>
 
     <script>
-      const tableItems = document.querySelectorAll(".table-item");
-      tableItems.forEach((tableItem) => {
-        tableItem.addEventListener("click", async (e) => {
-          const tableId = e.target.id;
-          try {
-            const response = await fetch(`/getTableData?table=${tableId}`);
-            if (!response.ok) return;
-            const data = await response.json();
-
-            const dataContainer = document.querySelector(".data-container");
-            dataContainer.innerHTML = `
-              <div class="data-title">Table: ${tableId}</div>
+      function generateTableData(data, tableId) {
+        const dataContainer = document.querySelector(".data-container");
+        dataContainer.innerHTML = `
+              <div class="data-title">Table: ${tableId} <button class="add-item-btn">Add Item</button></div>
+              <div class="error"></div>
               <table border="1">
                 <thead>
                   <tr class="table-row">
@@ -69,6 +62,208 @@
                 </tbody>
               </table>
             `;
+
+        addEventListnersToTableItems(data, tableId);
+      }
+
+      function addEventListnersToTableItems(data, tableId) {
+        const editButtons = document.querySelectorAll(".edit-btn");
+        editButtons.forEach((editButton, index) => {
+          editButton.addEventListener("click", async (e) => {
+            const row = e.target.closest("tr");
+            if (editButton.textContent === "Edit") {
+              [...row.cells].slice(0, -1).forEach((cell, columnIndex) => {
+                const currentValue = cell.textContent;
+                cell.innerHTML = `<input class="new-input" type="${
+                  data.columnTypes[columnIndex] === "integer" ||
+                  data.columnTypes[columnIndex] === "bigint"
+                    ? "number"
+                    : data.columnTypes[columnIndex] === "boolean"
+                    ? "checkbox"
+                    : data.columnTypes[columnIndex] ===
+                      "timestamp with time zone"
+                    ? "datetime-local"
+                    : data.columnTypes[columnIndex] === "date"
+                    ? "date"
+                    : "text"
+                }" value="${currentValue}">`;
+              });
+
+              const updateButton = row.querySelector(".edit-btn");
+              updateButton.textContent = "Update";
+              const cancelButton = row.querySelector(".delete-btn");
+              cancelButton.textContent = "Cancel";
+            } else {
+              const newValues = [...row.cells]
+                .slice(0, -1)
+                .map((cell) => cell.querySelector("input").value);
+              try {
+                const response = await fetch(`/updateItem?table=${tableId}`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    id: data.rows[index][0],
+                    values: newValues,
+                  }),
+                });
+
+                const newData = await response.json();
+
+                if (!response.ok) {
+                  const errorElement = document.querySelector(".error");
+                  errorElement.textContent = newData.error;
+                  errorElement.style.display = "block";
+                } else {
+                  generateTableData(newData, tableId);
+
+                  const updateButton = row.querySelector(".edit-btn");
+                  updateButton.textContent = "Edit";
+                  const cancelButton = row.querySelector(".delete-btn");
+                  cancelButton.textContent = "Delete";
+                }
+              } catch (error) {
+                console.error(
+                  "There was a problem with the fetch operation:",
+                  error
+                );
+              }
+            }
+          });
+        });
+
+        const deleteButtons = document.querySelectorAll(".delete-btn");
+        deleteButtons.forEach((deleteButton, index) => {
+          deleteButton.addEventListener("click", async (e) => {
+            const row = e.target.closest("tr");
+            if (deleteButton.textContent === "Cancel") {
+              const editButton = row.querySelector(".edit-btn");
+              editButton.textContent = "Edit";
+              deleteButton.textContent = "Delete";
+              [...row.cells].slice(0, -1).forEach((cell) => {
+                cell.textContent = cell.querySelector("input").value;
+              });
+            } else {
+              try {
+                const response = await fetch(`/deleteItem?table=${tableId}`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    id: data.rows[index][0],
+                  }),
+                });
+
+                const newData = await response.json();
+
+                if (!response.ok) {
+                  const errorElement = document.querySelector(".error");
+                  errorElement.textContent = newData.error;
+                  errorElement.style.display = "block";
+                } else {
+                  generateTableData(newData, tableId);
+                }
+              } catch (error) {
+                console.error(
+                  "There was a problem with the fetch operation:",
+                  error
+                );
+              }
+            }
+          });
+        });
+      }
+    </script>
+
+    <script>
+      const tableItems = document.querySelectorAll(".table-item");
+      tableItems.forEach((tableItem) => {
+        tableItem.addEventListener("click", async (e) => {
+          const tableId = e.target.id;
+          try {
+            const response = await fetch(`/getTableData?table=${tableId}`);
+            if (!response.ok) return;
+            const data = await response.json();
+
+            generateTableData(data, tableId);
+
+            const addBtn = document.querySelector(".add-item-btn");
+            addBtn.addEventListener("click", (e) => {
+              const table = document.querySelector("table");
+              const newRow = table.insertRow(0);
+              const addBtn = document.querySelector(".add-item-btn");
+              addBtn.disabled = true;
+
+              newRow.classList.add("table-row");
+              newRow.innerHTML = `
+                ${data.columnTypes
+                  .map(
+                    (column, index) =>
+                      `<td><input class="new-input" placeholder="${
+                        data.columns[index]
+                      }" type="${
+                        column === "integer" || column === "bigint"
+                          ? "number"
+                          : column === "boolean"
+                          ? "checkbox"
+                          : column === "timestamp with time zone"
+                          ? "datetime-local"
+                          : column === "date"
+                          ? "date"
+                          : "text"
+                      }" /></td>`
+                  )
+                  .join("")}
+
+                <td>
+                  <button class="save-btn">Save</button>
+                  <button class="cancel-btn">Cancel</button>
+                </td>
+              `;
+
+              const saveBtn = newRow.querySelector(".save-btn");
+              const cancelBtn = newRow.querySelector(".cancel-btn");
+              const errorElement = document.querySelector(".error");
+
+              saveBtn.addEventListener("click", async (e) => {
+                try {
+                  const response = await fetch(`/addItem?table=${tableId}`, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(
+                      [...newRow.cells]
+                        .slice(0, -1)
+                        .map((cell) => cell.querySelector("input").value)
+                    ),
+                  });
+                  if (!response.ok) return;
+                  const data = await response.json();
+                  if (!data || data.error) {
+                    errorElement.textContent = data.error;
+                    errorElement.style.display = "block";
+                  } else {
+                    generateTableData(data, tableId);
+                    newRow.remove();
+                    addBtn.disabled = false;
+                  }
+                } catch (error) {
+                  console.error(
+                    "There was a problem with the fetch operation:",
+                    error
+                  );
+                }
+              });
+
+              cancelBtn.addEventListener("click", (e) => {
+                newRow.remove();
+                errorElement.style.display = "none";
+                addBtn.disabled = false;
+              });
+            });
           } catch (error) {
             console.error(
               "There was a problem with the fetch operation:",
