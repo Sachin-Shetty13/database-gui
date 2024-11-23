@@ -1,6 +1,29 @@
 <html>
   <head>
     <title>Databases</title>
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+      integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js"
+      integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js"
+      integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+      crossorigin="anonymous"
+    ></script>
+
     <link rel="stylesheet" href="static/index.css" />
     <link rel="stylesheet" href="static/database.css" />
   </head>
@@ -21,13 +44,169 @@
           <li>No tables found</li>
           {% endfor %}
         </ul>
+
+        <button type="button" class="create-table-btn">Create New Table</button>
       </section>
 
       <section class="data-container">
         <div class="data-title-placeholder css-selector">
-          Click on a table to interact
+          Click on a table to interact or create a new table
         </div>
       </section>
+
+      <script>
+        const createTableBtn = document.querySelector(".create-table-btn");
+        const dataContainer = document.querySelector(".data-container");
+
+        createTableBtn.addEventListener("click", () => {
+          if (dataContainer.querySelector("input")) {
+            dataContainer.innerHTML = `
+              <div class="data-title-placeholder css-selector">
+                Click on a table to interact or create a new table
+              </div>
+            `;
+          } else {
+            dataContainer.innerHTML = `
+              <div class="create-container css-selector">
+                <div class="table-name-container">
+                  <input type="text" class="table-name-input" placeholder="Enter table name" />
+                  <button type="button" class="add-column-btn">Add Column</button>
+                </div>
+
+                <div class="error"></div>
+
+                <div class="column-container">
+                    <div class="column-name">Name</div>
+                    <div class="column-type">Data Type</div>
+
+                    
+                  </div>
+
+                <button type="button" class="save-table-btn">Save Table</button>
+                </div>
+              </div>
+            `;
+
+            const addColumnBtn = document.querySelector(".add-column-btn");
+            addColumnBtn.addEventListener("click", () => {
+              const columnContainer =
+                document.querySelector(".column-container");
+
+              columnContainer.insertAdjacentHTML(
+                "beforeend",
+                `
+                  <input type="text" class="column-name-input" id="${columnContainer.childElementCount}" placeholder="Enter column name" />
+                    
+                  <div class="column-type-container">
+                    <div class="selected-type"> - </div>
+
+                    <div class="dropdown">
+                      <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Choose the Type
+                      </button>
+                      <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <div class="dropdown-item" onclick="this.closest('.column-type-container').querySelector('.selected-type').textContent='integer'">integer</div>
+                        <div class="dropdown-item" onclick="this.closest('.column-type-container').querySelector('.selected-type').textContent='bigint'">bigint</div>
+                        <div class="dropdown-item" onclick="this.closest('.column-type-container').querySelector('.selected-type').textContent='boolean'">boolean</div>
+                        <div class="dropdown-item" onclick="this.closest('.column-type-container').querySelector('.selected-type').textContent='text'">text</div>
+                        <div class="dropdown-item" onclick="this.closest('.column-type-container').querySelector('.selected-type').textContent='date'">date</div>
+                        <div class="dropdown-item" onclick="this.closest('.column-type-container').querySelector('.selected-type').textContent='timestamptz'">timestamptz</div>
+                      </div>
+                    </div>
+                  </div>
+                `
+              );
+            });
+
+            const errorElement = document.querySelector(".error");
+            const saveTableBtn = document.querySelector(".save-table-btn");
+
+            saveTableBtn.addEventListener("click", async () => {
+              errorElement.style.display = "none";
+              errorElement.textContent = "";
+
+              const table_name =
+                document.querySelector(".table-name-input").value;
+
+              if (table_name === "") {
+                errorElement.textContent = "Table name cannot be empty";
+                errorElement.style.display = "block";
+                return;
+              }
+
+              const columns = [];
+              let stop = false;
+
+              document
+                .querySelectorAll(".column-name-input")
+                .forEach((input) => {
+                  if (stop) return;
+
+                  if (input.value === "") {
+                    errorElement.textContent = "Column name cannot be empty";
+                    errorElement.style.display = "block";
+
+                    stop = true;
+                    return;
+                  }
+
+                  if (
+                    input.nextElementSibling
+                      .querySelector(".selected-type")
+                      .textContent.trim() === "-"
+                  ) {
+                    errorElement.textContent = "Column type cannot be empty";
+                    errorElement.style.display = "block";
+
+                    stop = true;
+                    return;
+                  }
+
+                  columns.push({
+                    name: input.value,
+                    type: input.nextElementSibling.querySelector(
+                      ".selected-type"
+                    ).textContent,
+                  });
+                });
+
+              if (stop) return;
+
+              if (columns.length === 0) {
+                errorElement.textContent =
+                  "Table must have at least one column";
+                errorElement.style.display = "block";
+                return;
+              }
+
+              console.log({
+                table_name,
+                columns,
+              });
+
+              const response = await fetch("/createTable", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  table_name,
+                  columns,
+                }),
+              });
+
+              const data = await response.json();
+
+              if (!response.ok) {
+                errorElement.textContent = data.error;
+                errorElement.style.display = "block";
+              } else {
+                generateTableData(data, table_name);
+              }
+            });
+          }
+        });
+      </script>
     </main>
 
     <script>
