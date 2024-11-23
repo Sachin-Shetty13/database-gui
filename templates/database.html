@@ -16,15 +16,19 @@
         <ul class="table-list">
           {% for table in tables %}
           <li id="{{table}}" class="table-item">{{table}}</li>
+
+          {% else %}
+          <li>No tables found</li>
           {% endfor %}
         </ul>
       </section>
 
-      <section class="data-container"></section>
+      <section class="data-container">
+        <div class="data-title-placeholder css-selector">
+          Click on a table to interact
+        </div>
+      </section>
     </main>
-    <section class="data-container">
-      <div class="data-title">Click on a table to interact</div>
-    </section>
 
     <script>
       const tableItems = document.querySelectorAll(".table-item");
@@ -39,9 +43,9 @@
             const dataContainer = document.querySelector(".data-container");
             dataContainer.innerHTML = `
               <div class="data-title">Table: ${tableId}</div>
-              <table>
+              <table border="1">
                 <thead>
-                  <tr>
+                  <tr class="table-row">
                     ${data.columns
                       .map((column) => `<th>${column}</th>`)
                       .join("")}
@@ -51,7 +55,7 @@
                   ${data.rows
                     .map(
                       (row) =>
-                        `<tr>${row
+                        `<tr class="table-row">${row
                           .map((cell) => `<td>${cell}</td>`)
                           .join("")}</tr>`
                     )
@@ -66,6 +70,21 @@
             );
           }
         });
+      });
+    </script>
+
+    <script>
+      const disconnectBtn = document.querySelector(".disconnect-btn");
+      disconnectBtn.addEventListener("click", async (e) => {
+        try {
+          const response = await fetch("/disconnect", {
+            method: "GET",
+          });
+          if (!response.ok) return;
+          window.location.href = "/";
+        } catch (error) {
+          console.error("There was a problem with the fetch operation:", error);
+        }
       });
     </script>
   </body>

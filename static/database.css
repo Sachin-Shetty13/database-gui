@@ -84,3 +84,89 @@
   cursor: pointer;
   background-color: #4b4b4b83;
 }
+
+.data-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.data-title-placeholder {
+  font-size: 1.5rem;
+  text-align: center;
+  font-weight: bold;
+  font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
+    "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.css-selector {
+  background: linear-gradient(312deg, #000000, #443d7a, #000000);
+  background-size: 600% 600%;
+
+  -webkit-animation: gradient 31s ease infinite;
+  -moz-animation: gradient 31s ease infinite;
+  animation: gradient 31s ease infinite;
+}
+
+@-webkit-keyframes gradient {
+  0% {
+    background-position: 0% 22%;
+  }
+  50% {
+    background-position: 100% 79%;
+  }
+  100% {
+    background-position: 0% 22%;
+  }
+}
+@-moz-keyframes gradient {
+  0% {
+    background-position: 0% 22%;
+  }
+  50% {
+    background-position: 100% 79%;
+  }
+  100% {
+    background-position: 0% 22%;
+  }
+}
+@keyframes gradient {
+  0% {
+    background-position: 0% 22%;
+  }
+  50% {
+    background-position: 100% 79%;
+  }
+  100% {
+    background-position: 0% 22%;
+  }
+}
+
+.data-title {
+  font-size: 1.5rem;
+  margin: 1rem;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+
+  margin: 1rem;
+}
+
+.table-row th {
+  border: #555080;
+  padding: 0.5rem;
+  background-color: #645e9d;
+}
+
+.table-row td {
+  border: #555080;
+  padding: 0.5rem;
+  text-align: center;
+}
