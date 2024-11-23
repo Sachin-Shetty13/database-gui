@@ -25,6 +25,9 @@ class Database:
             raise Exception(f'Connection failed: {errorMsg}')
         
     def getCursor(self):
+        if self.postgres is None:
+            self.connect()
+            
         return self.postgres.cursor()
     
     def close(self):
