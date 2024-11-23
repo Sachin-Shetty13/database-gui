@@ -149,12 +149,11 @@
 
 .data-title {
   font-size: 1.5rem;
-  margin: 1rem;
+  padding: 1rem;
 }
 
 table {
   border-collapse: collapse;
-  width: 100%;
 
   margin: 1rem;
 }
@@ -169,4 +168,38 @@ table {
   border: #555080;
   padding: 0.5rem;
   text-align: center;
+}
+
+.edit-btn,
+.delete-btn {
+  border: none;
+  border-radius: 4px;
+
+  padding: 0.3rem 0.7rem;
+
+  font-weight: bold;
+}
+
+.edit-btn {
+  background-color: #035e7b;
+
+  color: rgb(218, 218, 218);
+  transition: all 0.2s ease-in-out;
+}
+
+.edit-btn:hover {
+  cursor: pointer;
+  background-color: #0e807a;
+}
+
+.delete-btn {
+  background-color: #a3333d;
+
+  color: rgb(218, 218, 218);
+  transition: all 0.2s ease-in-out;
+}
+
+.delete-btn:hover {
+  cursor: pointer;
+  background-color: #c33d3d;
 }

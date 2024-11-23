@@ -49,6 +49,7 @@
                     ${data.columns
                       .map((column) => `<th>${column}</th>`)
                       .join("")}
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -57,7 +58,12 @@
                       (row) =>
                         `<tr class="table-row">${row
                           .map((cell) => `<td>${cell}</td>`)
-                          .join("")}</tr>`
+                          .join("")}
+                          <td>
+                            <button class="edit-btn">Edit</button>
+                            <button class="delete-btn">Delete</button>
+                          </td>
+                        </tr>`
                     )
                     .join("")}
                 </tbody>
