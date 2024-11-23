@@ -196,6 +196,7 @@ table {
   border: #555080;
   padding: 0.5rem;
   background-color: #645e9d;
+  text-align: center;
 }
 
 .table-row td {

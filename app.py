@@ -67,13 +67,22 @@ def disconnect():
 @app.route('/getTableData', methods=['GET'])
 def getTableData():
     table = request.args.get('table')
-    cursor = database.getCursor()
     
-    cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
-    resultColumns = cursor.fetchall()
+    try:
+        cursor = database.getCursor()
+        
+        cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
+        resultColumns = cursor.fetchall()
+        
+        cursor.execute(f"SELECT * FROM {table}")
+        resultRows = cursor.fetchall()
     
-    cursor.execute(f"SELECT * FROM {table}")
-    resultRows = cursor.fetchall()
+    except Exception as e:
+        database.postgres.rollback()
+        return jsonify(error=': '.join(str(e).replace('\n', ' ').split(':')))
+    
+    finally:
+        cursor.close()
     
     cursor.close()
     return jsonify(rows=resultRows, columns=[column[0] for column in resultColumns], columnTypes=[column[1] for column in resultColumns])
@@ -83,27 +92,26 @@ def addItem():
     table = request.args.get('table')
     data = request.json
     
-    cursor = database.getCursor()
-    cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
-    resultColumns = cursor.fetchall()
-    
-    columns = [column[0] for column in resultColumns]
-    
-    cursor = database.getCursor()
-    
     try:
+        cursor = database.getCursor()
+        cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
+        resultColumns = cursor.fetchall()
+        
+        columns = [column[0] for column in resultColumns]
+        
         cursor.execute(f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(['%s' for _ in data])})", data)
         database.postgres.commit()
+        
+        cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
+        resultColumns = cursor.fetchall()
+        
+        cursor.execute(f"SELECT * FROM {table}")
+        resultRows = cursor.fetchall()
     except Exception as e:
         database.postgres.rollback()
-        cursor.close()
         return jsonify(error=': '.join(str(e).replace('\n', ' ').split(':')))
-    
-    cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
-    resultColumns = cursor.fetchall()
-    
-    cursor.execute(f"SELECT * FROM {table}")
-    resultRows = cursor.fetchall()
+    finally:
+        cursor.close()
     
     cursor.close()
     return jsonify(rows=resultRows, columns=[column[0] for column in resultColumns], columnTypes=[column[1] for column in resultColumns])
@@ -115,13 +123,12 @@ def updateItem():
     
     print(data, table)
     
-    cursor = database.getCursor()
-    cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
-    resultColumns = cursor.fetchall()
-    
-    columns = [column[0] for column in resultColumns]
-    
     try:
+        cursor = database.getCursor()
+        cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
+        resultColumns = cursor.fetchall()
+        
+        columns = [column[0] for column in resultColumns]
         cursor.execute(f"UPDATE {table} SET {', '.join([f'{column} = %s' for column in columns])} WHERE id = %s", (*data['values'], data['id']))
         database.postgres.commit()
     except Exception as e:
@@ -143,22 +150,56 @@ def deleteItem():
     table = request.args.get('table')
     data = request.json
     
-    cursor = database.getCursor()
+    
     try:
+        cursor = database.getCursor()
         cursor.execute(f"DELETE FROM {table} WHERE id = %s", (data['id'],))
         database.postgres.commit()
+        
+        cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
+        resultColumns = cursor.fetchall()
+        
+        cursor.execute(f"SELECT * FROM {table}")
+        resultRows = cursor.fetchall()
+    except Exception as e:
+        database.postgres.rollback()
+        return jsonify(error=': '.join(str(e).replace('\n', ' ').split(':')))
+    finally:
+        cursor.close()
+        
+    return jsonify(rows=resultRows, columns=[column[0] for column in resultColumns], columnTypes=[column[1] for column in resultColumns])
+
+@app.route('/createTable', methods=['POST'])
+def createTable():
+    data = request.json
+    table_name = data['table_name']
+    columns = data['columns']
+    
+    if not table_name or not columns:
+        return jsonify(error='Please fill in all fields')
+    
+    table_name = table_name.replace(' ', '_').lower()
+    
+    column_list = [f"id SERIAL PRIMARY KEY"] + [f"{column['name'].replace(' ', '_').lower()} {column['type']}" for column in columns]
+    print(f"CREATE TABLE {table_name} ({', '.join(column_list)})")
+    
+    try:
+        cursor = database.getCursor()
+        cursor.execute(f"CREATE TABLE {table_name} ({', '.join(column_list)})")
+        database.postgres.commit()
+        
+        cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table_name}'")
+        resultColumns = cursor.fetchall()
+        
+        cursor.execute(f"SELECT * FROM {table_name}")
+        resultRows = cursor.fetchall()
     except Exception as e:
         database.postgres.rollback()
         cursor.close()
         return jsonify(error=': '.join(str(e).replace('\n', ' ').split(':')))
-    
-    cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
-    resultColumns = cursor.fetchall()
-    
-    cursor.execute(f"SELECT * FROM {table}")
-    resultRows = cursor.fetchall()
-    
-    cursor.close()
+    finally:
+        cursor.close()
+        
     return jsonify(rows=resultRows, columns=[column[0] for column in resultColumns], columnTypes=[column[1] for column in resultColumns])
 
 if __name__ == '__main__':
