@@ -1,10 +1,18 @@
 from flask import Flask, render_template, request, redirect, session
 import psycopg2
+from helpers.database.config import Database
 
 app = Flask(__name__)
 
 @app.route('/')
 def index():
+    database_name = session.get('database_name')
+    username = session.get('username')
+    password = session.get('password')
+    
+    if database_name and username and password:
+        return redirect('/database')
+    
     return render_template('index.html')
 
 @app.route('/connect', methods=['POST'])
@@ -30,14 +38,24 @@ def database():
     if not database_name or not username or not password:
         return redirect('/?error=Please connect to a database first')
     
-    try:
-        postgres = psycopg2.connect(database=database_name, user=username, password=password, host='localhost', port='5432')
-    except Exception as e:
-        errorMsg = str(e).split(':')[-1].strip()
-            
-        return redirect(f'/?error=Connection failed: {errorMsg}')
+    database_name = "medicause"
     
-    return render_template('database.html')
+    try:
+        database = Database(db_name=database_name, db_user=username, db_password=password)
+        database.connect()
+    except Exception as e:
+        session.clear()
+        return redirect(f'/?error={str(e)}')
+    
+    cursor = database.getCursor()
+    cursor.execute("SELECT table_name FROM %s.tables WHERE table_schema='public'" % "information_schema")
+    resultTables = cursor.fetchall()
+    tables = []
+    
+    for table in resultTables:
+        tables.append(table[0])
+    
+    return render_template('database.html', database_name=database_name, tables=tables)
 
 if __name__ == '__main__':
     app.secret_key = 'super secret key'
