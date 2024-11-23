@@ -1,6 +1,72 @@
 <html>
   <head>
     <title>Databases</title>
+    <link rel="stylesheet" href="static/index.css" />
+    <link rel="stylesheet" href="static/database.css" />
   </head>
-  <body></body>
+  <body>
+    <main class="main-layout">
+      <section class="table-container">
+        <div class="database-name">
+          <span class="database-name-title">Database</span> {{database_name}}
+        </div>
+        <button type="button" class="disconnect-btn">Disconnect</button>
+
+        <div class="table-title">Tables</div>
+        <ul class="table-list">
+          {% for table in tables %}
+          <li id="{{table}}" class="table-item">{{table}}</li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <section class="data-container"></section>
+    </main>
+    <section class="data-container">
+      <div class="data-title">Click on a table to interact</div>
+    </section>
+
+    <script>
+      const tableItems = document.querySelectorAll(".table-item");
+      tableItems.forEach((tableItem) => {
+        tableItem.addEventListener("click", async (e) => {
+          const tableId = e.target.id;
+          try {
+            const response = await fetch(`/getTableData?table=${tableId}`);
+            if (!response.ok) throw new Error("Network response was not ok");
+            const data = await response.json();
+
+            const dataContainer = document.querySelector(".data-container");
+            dataContainer.innerHTML = `
+              <div class="data-title">Table: ${tableId}</div>
+              <table>
+                <thead>
+                  <tr>
+                    ${data.columns
+                      .map((column) => `<th>${column}</th>`)
+                      .join("")}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${data.rows
+                    .map(
+                      (row) =>
+                        `<tr>${row
+                          .map((cell) => `<td>${cell}</td>`)
+                          .join("")}</tr>`
+                    )
+                    .join("")}
+                </tbody>
+              </table>
+            `;
+          } catch (error) {
+            console.error(
+              "There was a problem with the fetch operation:",
+              error
+            );
+          }
+        });
+      });
+    </script>
+  </body>
 </html>

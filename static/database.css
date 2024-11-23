@@ -1,0 +1,86 @@
+.main-layout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  height: 100%;
+}
+
+.table-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 1rem;
+
+  width: 300px;
+  padding: 1rem;
+
+  background-color: #002e2c;
+}
+
+.database-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  border: 2px solid #006661;
+
+  transition: all 0.2s ease-in-out;
+}
+
+.database-name:hover {
+  cursor: pointer;
+  border: 2px solid #0e807a;
+  background-color: #023634;
+}
+
+.database-name:hover .database-name-title {
+  background-color: #0e807a;
+}
+
+.database-name-title {
+  padding: 0.7rem 0.4rem;
+
+  background-color: #006661;
+
+  font-weight: bold;
+  color: rgb(218, 218, 218);
+}
+
+.disconnect-btn {
+  border: none;
+  border-radius: 4px;
+
+  padding: 0.7rem 0.4rem;
+
+  background-color: #035e7b;
+
+  font-weight: bold;
+  color: rgb(218, 218, 218);
+  transition: all 0.2s ease-in-out;
+}
+
+.disconnect-btn:hover {
+  cursor: pointer;
+  background-color: #a3333d;
+}
+
+.table-title {
+  margin-top: 1rem;
+  padding-bottom: 0.2rem;
+  border-bottom: 2px solid #4b4b4b83;
+}
+
+.table-list {
+  list-style: none;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.table-list li {
+  padding: 0.5rem;
+}
+
+.table-list li:hover {
+  cursor: pointer;
+  background-color: #4b4b4b83;
+}
