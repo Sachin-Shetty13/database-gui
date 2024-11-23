@@ -33,7 +33,7 @@
           const tableId = e.target.id;
           try {
             const response = await fetch(`/getTableData?table=${tableId}`);
-            if (!response.ok) throw new Error("Network response was not ok");
+            if (!response.ok) return;
             const data = await response.json();
 
             const dataContainer = document.querySelector(".data-container");

@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, jsonify
 import psycopg2
 from helpers.database.config import Database
 
 app = Flask(__name__)
+database = Database()
 
 @app.route('/')
 def index():
@@ -30,7 +31,7 @@ def connect():
     return redirect('/database')
    
 @app.route('/database')
-def database():
+def databaseFunc():
     database_name = session.get('database_name')
     username = session.get('username')
     password = session.get('password')
@@ -41,7 +42,7 @@ def database():
     database_name = "medicause"
     
     try:
-        database = Database(db_name=database_name, db_user=username, db_password=password)
+        database.setConfig(database_name, username, password, 'localhost', 5432)
         database.connect()
     except Exception as e:
         session.clear()
@@ -54,8 +55,24 @@ def database():
     
     for table in resultTables:
         tables.append(table[0])
+        
+    cursor.close()
     
     return render_template('database.html', database_name=database_name, tables=tables)
+
+@app.route('/getTableData', methods=['GET'])
+def getTableData():
+    table = request.args.get('table')
+    cursor = database.getCursor()
+    
+    cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
+    resultColumns = cursor.fetchall()
+    
+    cursor.execute(f"SELECT * FROM {table}")
+    resultRows = cursor.fetchall()
+    
+    cursor.close()
+    return jsonify(rows=resultRows, columns=[column[0] for column in resultColumns])
 
 if __name__ == '__main__':
     app.secret_key = 'super secret key'
