@@ -1,9 +1,6 @@
-from flask import Flask, render_template, request, redirect, session, jsonify
+from flask import render_template, request, redirect, session, jsonify
 from helpers.database.config import Database
-
-def create_app():
-    app = Flask(__name__)
-    return app
+from create_app import create_app
 
 app = create_app()
 database = Database()
