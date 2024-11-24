@@ -18,18 +18,6 @@
           name="connection_string"
           placeholder="Database name"
         />
-        <input
-          type="username"
-          id="username"
-          name="username"
-          placeholder="Username"
-        />
-        <input
-          type="password"
-          id="password"
-          name="password"
-          placeholder="Password "
-        />
         <button type="submit">Connect</button>
       </form>
 
@@ -49,7 +37,7 @@
             toggleFormButton.textContent = "Connect to a database";
             formPrompt.textContent = "Create a database";
             submitButton.textContent = "Create";
-            form.action = "/create";
+            form.action = "/createDatabase";
             toggleFormButton.dataset.formState = "create";
           } else {
             toggleFormButton.textContent = "Create a database";

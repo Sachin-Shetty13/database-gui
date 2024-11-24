@@ -353,30 +353,16 @@
             }
           });
         });
-      }
-    </script>
 
-    <script>
-      const tableItems = document.querySelectorAll(".table-item");
-      tableItems.forEach((tableItem) => {
-        tableItem.addEventListener("click", async (e) => {
-          const tableId = e.target.id;
-          try {
-            const response = await fetch(`/getTableData?table=${tableId}`);
-            if (!response.ok) return;
-            const data = await response.json();
+        const addBtn = document.querySelector(".add-item-btn");
+        addBtn.addEventListener("click", (e) => {
+          const table = document.querySelector("table");
+          const newRow = table.insertRow(0);
+          const addBtn = document.querySelector(".add-item-btn");
+          addBtn.disabled = true;
 
-            generateTableData(data, tableId);
-
-            const addBtn = document.querySelector(".add-item-btn");
-            addBtn.addEventListener("click", (e) => {
-              const table = document.querySelector("table");
-              const newRow = table.insertRow(0);
-              const addBtn = document.querySelector(".add-item-btn");
-              addBtn.disabled = true;
-
-              newRow.classList.add("table-row");
-              newRow.innerHTML = `
+          newRow.classList.add("table-row");
+          newRow.innerHTML = `
                 ${data.columnTypes
                   .map(
                     (column, index) =>
@@ -402,47 +388,61 @@
                 </td>
               `;
 
-              const saveBtn = newRow.querySelector(".save-btn");
-              const cancelBtn = newRow.querySelector(".cancel-btn");
-              const errorElement = document.querySelector(".error");
+          const saveBtn = newRow.querySelector(".save-btn");
+          const cancelBtn = newRow.querySelector(".cancel-btn");
+          const errorElement = document.querySelector(".error");
 
-              saveBtn.addEventListener("click", async (e) => {
-                try {
-                  const response = await fetch(`/addItem?table=${tableId}`, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(
-                      [...newRow.cells]
-                        .slice(0, -1)
-                        .map((cell) => cell.querySelector("input").value)
-                    ),
-                  });
-                  if (!response.ok) return;
-                  const data = await response.json();
-                  if (!data || data.error) {
-                    errorElement.textContent = data.error;
-                    errorElement.style.display = "block";
-                  } else {
-                    generateTableData(data, tableId);
-                    newRow.remove();
-                    addBtn.disabled = false;
-                  }
-                } catch (error) {
-                  console.error(
-                    "There was a problem with the fetch operation:",
-                    error
-                  );
-                }
+          saveBtn.addEventListener("click", async (e) => {
+            try {
+              const response = await fetch(`/addItem?table=${tableId}`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(
+                  [...newRow.cells]
+                    .slice(0, -1)
+                    .map((cell) => cell.querySelector("input").value)
+                ),
               });
-
-              cancelBtn.addEventListener("click", (e) => {
+              if (!response.ok) return;
+              const data = await response.json();
+              if (!data || data.error) {
+                errorElement.textContent = data.error;
+                errorElement.style.display = "block";
+              } else {
+                generateTableData(data, tableId);
                 newRow.remove();
-                errorElement.style.display = "none";
                 addBtn.disabled = false;
-              });
-            });
+              }
+            } catch (error) {
+              console.error(
+                "There was a problem with the fetch operation:",
+                error
+              );
+            }
+          });
+
+          cancelBtn.addEventListener("click", (e) => {
+            newRow.remove();
+            errorElement.style.display = "none";
+            addBtn.disabled = false;
+          });
+        });
+      }
+    </script>
+
+    <script>
+      const tableItems = document.querySelectorAll(".table-item");
+      tableItems.forEach((tableItem) => {
+        tableItem.addEventListener("click", async (e) => {
+          const tableId = e.target.id;
+          try {
+            const response = await fetch(`/getTableData?table=${tableId}`);
+            if (!response.ok) return;
+            const data = await response.json();
+
+            generateTableData(data, tableId);
           } catch (error) {
             console.error(
               "There was a problem with the fetch operation:",

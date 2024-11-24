@@ -8,10 +8,8 @@ database = Database()
 @app.route('/')
 def index():
     database_name = session.get('database_name')
-    username = session.get('username')
-    password = session.get('password')
     
-    if database_name and username and password:
+    if database_name:
         return redirect('/database')
     
     return render_template('index.html')
@@ -19,28 +17,51 @@ def index():
 @app.route('/connect', methods=['POST'])
 def connect():
     database_name = request.form.get('connection_string')
-    username = request.form.get('username')
-    password = request.form.get('password')
     
-    if not database_name or not username or not password:
+    if not database_name:
         return redirect('/?error=Please fill in all fields')
     
+    session['database_name'] = database_name.replace(' ', '_').lower()
+    return redirect('/database')
+
+@app.route('/createDatabase', methods=['POST'])
+def createDatabase():
+    database_name = request.form.get('connection_string')
+    
+    if not database_name:
+        return redirect('/?error=Please fill in all fields')
+    
+    database_name = database_name.replace(' ', '_').lower()
+    cursor = None
+    
+    try:
+        database.setConfig('admin_n27v')
+        database.connect()
+        database.postgres.autocommit = True
+        
+        cursor = database.getCursor()
+        cursor.execute(f"CREATE DATABASE {database_name}")
+        cursor.execute(f"GRANT ALL PRIVILEGES ON DATABASE {database_name} TO admin")
+    except Exception as e:
+        error = ': '.join(str(e).replace('\n', ' ').split(':'))
+        return redirect(f'/?error={error}')
+    finally:
+        if cursor:
+            cursor.close()
+    
     session['database_name'] = database_name
-    session['username'] = username
-    session['password'] = password
+    
     return redirect('/database')
    
 @app.route('/database')
 def databaseFunc():
     database_name = session.get('database_name')
-    username = session.get('username')
-    password = session.get('password')
     
-    if not database_name or not username or not password:
+    if not database_name:
         return redirect('/?error=Please connect to a database first')
     
     try:
-        database.setConfig(database_name, username, password, 'localhost', 5432)
+        database.setConfig(database_name)
         database.connect()
     except Exception as e:
         session.clear()
@@ -172,7 +193,7 @@ def deleteItem():
 @app.route('/createTable', methods=['POST'])
 def createTable():
     data = request.json
-    table_name = data['table_name']
+    table_name = data['table_name'].replace(' ', '_').lower()
     columns = data['columns']
     
     if not table_name or not columns:
