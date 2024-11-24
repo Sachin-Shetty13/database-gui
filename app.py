@@ -1,8 +1,11 @@
 from flask import Flask, render_template, request, redirect, session, jsonify
-import psycopg2
 from helpers.database.config import Database
 
-app = Flask(__name__)
+def create_app():
+    app = Flask(__name__)
+    return app
+
+app = create_app()
 database = Database()
 
 @app.route('/')
@@ -95,6 +98,16 @@ def getTableData():
         cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
         resultColumns = cursor.fetchall()
         
+        cursor.execute(f"Select * FROM {table} LIMIT 0")
+        colnames = [desc[0] for desc in cursor.description]
+        
+        finalColumns = []
+        for column in colnames:
+            for col in resultColumns:
+                if col[0] == column:
+                    finalColumns.append((col[0], col[1]))
+                    break
+        
         cursor.execute(f"SELECT * FROM {table}")
         resultRows = cursor.fetchall()
     
@@ -104,9 +117,9 @@ def getTableData():
     
     finally:
         cursor.close()
-    
+        
     cursor.close()
-    return jsonify(rows=resultRows, columns=[column[0] for column in resultColumns], columnTypes=[column[1] for column in resultColumns])
+    return jsonify(rows=resultRows, columns=[column[0] for column in finalColumns], columnTypes=[column[1] for column in finalColumns])
 
 @app.route('/addItem', methods=['POST'])
 def addItem():
@@ -120,7 +133,17 @@ def addItem():
         
         columns = [column[0] for column in resultColumns]
         
-        cursor.execute(f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(['%s' for _ in data])})", data)
+        cursor.execute(f"Select * FROM {table} LIMIT 0")
+        colnames = [desc[0] for desc in cursor.description]
+        
+        finalColumns = []
+        for column in colnames:
+            for col in resultColumns:
+                if col[0] == column:
+                    finalColumns.append((col[0], col[1]))
+                    break
+        
+        cursor.execute(f"INSERT INTO {table} ({', '.join(colnames)}) VALUES ({', '.join(['%s' for _ in data])})", data)
         database.postgres.commit()
         
         cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
@@ -135,14 +158,12 @@ def addItem():
         cursor.close()
     
     cursor.close()
-    return jsonify(rows=resultRows, columns=[column[0] for column in resultColumns], columnTypes=[column[1] for column in resultColumns])
+    return jsonify(rows=resultRows, columns=[column[0] for column in finalColumns], columnTypes=[column[1] for column in finalColumns])
 
 @app.route('/updateItem', methods=['POST'])
 def updateItem():
     table = request.args.get('table')
     data = request.json
-    
-    print(data, table)
     
     try:
         cursor = database.getCursor()
@@ -150,7 +171,18 @@ def updateItem():
         resultColumns = cursor.fetchall()
         
         columns = [column[0] for column in resultColumns]
-        cursor.execute(f"UPDATE {table} SET {', '.join([f'{column} = %s' for column in columns])} WHERE id = %s", (*data['values'], data['id']))
+        
+        cursor.execute(f"Select * FROM {table} LIMIT 0")
+        colnames = [desc[0] for desc in cursor.description]
+        
+        finalColumns = []
+        for column in colnames:
+            for col in resultColumns:
+                if col[0] == column:
+                    finalColumns.append((col[0], col[1]))
+                    break
+        
+        cursor.execute(f"UPDATE {table} SET {', '.join([f'{column} = %s' for column in colnames])} WHERE id = %s", (*data['values'], data['id']))
         database.postgres.commit()
     except Exception as e:
         database.postgres.rollback()
@@ -164,13 +196,12 @@ def updateItem():
     resultRows = cursor.fetchall()
     
     cursor.close()
-    return jsonify(rows=resultRows, columns=[column[0] for column in resultColumns], columnTypes=[column[1] for column in resultColumns])
+    return jsonify(rows=resultRows, columns=[column[0] for column in finalColumns], columnTypes=[column[1] for column in finalColumns])
 
 @app.route('/deleteItem', methods=['POST'])
 def deleteItem():
     table = request.args.get('table')
     data = request.json
-    
     
     try:
         cursor = database.getCursor()
@@ -180,6 +211,16 @@ def deleteItem():
         cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
         resultColumns = cursor.fetchall()
         
+        cursor.execute(f"Select * FROM {table} LIMIT 0")
+        colnames = [desc[0] for desc in cursor.description]
+        
+        finalColumns = []
+        for column in colnames:
+            for col in resultColumns:
+                if col[0] == column:
+                    finalColumns.append((col[0], col[1]))
+                    break
+        
         cursor.execute(f"SELECT * FROM {table}")
         resultRows = cursor.fetchall()
     except Exception as e:
@@ -188,7 +229,7 @@ def deleteItem():
     finally:
         cursor.close()
         
-    return jsonify(rows=resultRows, columns=[column[0] for column in resultColumns], columnTypes=[column[1] for column in resultColumns])
+    return jsonify(rows=resultRows, columns=[column[0] for column in finalColumns], columnTypes=[column[1] for column in finalColumns])
 
 @app.route('/createTable', methods=['POST'])
 def createTable():
@@ -202,7 +243,6 @@ def createTable():
     table_name = table_name.replace(' ', '_').lower()
     
     column_list = [f"id SERIAL PRIMARY KEY"] + [f"{column['name'].replace(' ', '_').lower()} {column['type']}" for column in columns]
-    print(f"CREATE TABLE {table_name} ({', '.join(column_list)})")
     
     try:
         cursor = database.getCursor()
@@ -211,6 +251,16 @@ def createTable():
         
         cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table_name}'")
         resultColumns = cursor.fetchall()
+        
+        cursor.execute(f"Select * FROM {table_name} LIMIT 0")
+        colnames = [desc[0] for desc in cursor.description]
+        
+        finalColumns = []
+        for column in colnames:
+            for col in resultColumns:
+                if col[0] == column:
+                    finalColumns.append((col[0], col[1]))
+                    break
         
         cursor.execute(f"SELECT * FROM {table_name}")
         resultRows = cursor.fetchall()
@@ -221,8 +271,8 @@ def createTable():
     finally:
         cursor.close()
         
-    return jsonify(rows=resultRows, columns=[column[0] for column in resultColumns], columnTypes=[column[1] for column in resultColumns])
+    return jsonify(rows=resultRows, columns=[column[0] for column in finalColumns], columnTypes=[column[1] for column in finalColumns])
 
 if __name__ == '__main__':
     app.secret_key = 'super secret key'
-    app.run(debug=True)
+    app.run()
